@@ -35,6 +35,32 @@ function BasketIcon({ className }) {
   );
 }
 
+function LocationIcon({ className }) {
+  return (
+    <svg
+      className={className}
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+    >
+      <path
+        d="M12 22s7-4.5 7-11a7 7 0 1 0-14 0c0 6.5 7 11 7 11Z"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M12 11.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z"
+        stroke="currentColor"
+        strokeWidth="2"
+      />
+    </svg>
+  );
+}
+
 function HeartIcon({ className, filled }) {
   return (
     <svg
@@ -659,7 +685,124 @@ const fallbackPets = [
 
 function getImageSrcForPet(petId) {
   const imageIndex = ((petId - 1) % 30) + 1;
-  return `/src/assets/image${imageIndex}.png`;
+  return new URL(`../assets/image${imageIndex}.png`, import.meta.url).href;
+}
+
+function placeholderDataUrl(petName, petType) {
+  const cream = "#fdfaf7";
+  const lightBrown = "#f4eddf";
+  const darkBrown = "#4a2c1f";
+
+  const safeName = String(petName || "Pet").replace(/</g, "&lt;");
+  const safeType = String(petType || "").replace(/</g, "&lt;");
+
+  const svg = `
+  <svg xmlns="http://www.w3.org/2000/svg" width="800" height="500" viewBox="0 0 800 500">
+    <defs>
+      <linearGradient id="g" x1="0" x2="1" y1="0" y2="1">
+        <stop offset="0" stop-color="${lightBrown}"/>
+        <stop offset="1" stop-color="${cream}"/>
+      </linearGradient>
+    </defs>
+    <rect width="800" height="500" fill="url(#g)"/>
+    <rect x="40" y="40" width="720" height="420" rx="26" fill="${cream}" stroke="${darkBrown}" stroke-opacity="0.18"/>
+    <circle cx="400" cy="210" r="80" fill="${lightBrown}" stroke="${darkBrown}" stroke-opacity="0.25"/>
+    <text x="400" y="335" text-anchor="middle" font-family="Arial, sans-serif" font-size="44" font-weight="800" fill="${darkBrown}">${safeName}</text>
+    <text x="400" y="385" text-anchor="middle" font-family="Arial, sans-serif" font-size="26" font-weight="700" fill="${darkBrown}" opacity="0.75">${safeType}</text>
+  </svg>`;
+
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+}
+
+function aidKey(petId, kind) {
+  return `${petId}:${kind}`;
+}
+
+function PetCarousel({ pet, images, activeIndex, setActiveIndex }) {
+  const [drag, setDrag] = useState(null);
+
+  const count = images.length;
+  const index = Math.min(Math.max(activeIndex, 0), Math.max(count - 1, 0));
+
+  function go(delta) {
+    if (count <= 1) return;
+    const next = (index + delta + count) % count;
+    setActiveIndex(next);
+  }
+
+  function onStart(clientX) {
+    setDrag({ x: clientX });
+  }
+
+  function onEnd(clientX) {
+    if (!drag) return;
+    const dx = clientX - drag.x;
+    setDrag(null);
+    if (Math.abs(dx) < 40) return;
+    if (dx < 0) go(1);
+    else go(-1);
+  }
+
+  return (
+    <div
+      className="petMedia"
+      onTouchStart={(e) => onStart(e.touches?.[0]?.clientX ?? 0)}
+      onTouchEnd={(e) => onEnd(e.changedTouches?.[0]?.clientX ?? 0)}
+      onMouseDown={(e) => onStart(e.clientX)}
+      onMouseUp={(e) => onEnd(e.clientX)}
+      onMouseLeave={() => setDrag(null)}
+      role="group"
+      aria-label={`${pet.name} photos`}
+    >
+      <div
+        className="petMediaTrack"
+        style={{ transform: `translateX(-${index * 100}%)` }}
+      >
+        {images.map((img, i) => (
+          <div key={i} className="petMediaSlide">
+            <img
+              className="petImage"
+              src={img.src}
+              alt={img.alt}
+              loading="lazy"
+              onError={(e) => {
+                e.currentTarget.src = placeholderDataUrl(pet.name, pet.type);
+              }}
+            />
+          </div>
+        ))}
+      </div>
+
+      {count > 1 ? (
+        <>
+          <button
+            type="button"
+            className="petMediaNav prev"
+            onClick={() => go(-1)}
+            aria-label="Previous photo"
+          >
+            ‹
+          </button>
+          <button
+            type="button"
+            className="petMediaNav next"
+            onClick={() => go(1)}
+            aria-label="Next photo"
+          >
+            ›
+          </button>
+          <div className="petMediaDots" aria-hidden="true">
+            {images.map((_, i) => (
+              <span
+                key={i}
+                className={`petMediaDot ${i === index ? "active" : ""}`}
+              />
+            ))}
+          </div>
+        </>
+      ) : null}
+    </div>
+  );
 }
 
 function Adopt() {
@@ -667,7 +810,11 @@ function Adopt() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [liked, setLiked] = useState(() => new Set());
+  const [adopted, setAdopted] = useState(() => new Set());
+  const [aidRequested, setAidRequested] = useState(() => new Set());
   const [filter, setFilter] = useState("all");
+  const [visibleCount, setVisibleCount] = useState(9);
+  const [carouselIndexByPetId, setCarouselIndexByPetId] = useState(() => ({}));
 
   useEffect(() => {
     let cancelled = false;
@@ -676,13 +823,38 @@ function Adopt() {
       setLoading(true);
       setError("");
       try {
-        const res = await fetch("/api/pets");
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
+        const [petsRes, stateRes] = await Promise.all([
+          fetch("/api/pets"),
+          fetch("/api/state"),
+        ]);
+
+        if (!petsRes.ok) throw new Error(`HTTP ${petsRes.status}`);
+
+        const petsData = await petsRes.json();
+        const stateData = stateRes.ok ? await stateRes.json() : null;
+
         if (!cancelled) {
-          setPets(Array.isArray(data) ? data : fallbackPets);
+          setPets(Array.isArray(petsData) ? petsData : fallbackPets);
+
+          if (stateData && typeof stateData === "object") {
+            setLiked(new Set(Array.isArray(stateData.likes) ? stateData.likes : []));
+            setAdopted(
+              new Set(
+                Array.isArray(stateData.adoptions) ? stateData.adoptions : []
+              )
+            );
+
+            const aidArr = Array.isArray(stateData.aid) ? stateData.aid : [];
+            setAidRequested(
+              new Set(
+                aidArr
+                  .filter((r) => r && r.petId && r.kind)
+                  .map((r) => aidKey(r.petId, r.kind))
+              )
+            );
+          }
         }
-      } catch (e) {
+      } catch {
         if (!cancelled) {
           setPets(fallbackPets);
           setError("Backend not reachable, showing local data.");
@@ -708,7 +880,43 @@ function Adopt() {
     return pets.filter((p) => p.type === filter);
   }, [pets, filter]);
 
+  const rescuePets = useMemo(() => {
+    return pets.filter((p) => p.needsRescue);
+  }, [pets]);
+
+  const visiblePets = useMemo(() => {
+    return filteredPets.slice(0, visibleCount);
+  }, [filteredPets, visibleCount]);
+
+  function imagesForPet(pet) {
+    const base = getImageSrcForPet(pet.id);
+    const alt2 = getImageSrcForPet(pet.id + 1);
+    const alt3 = getImageSrcForPet(pet.id + 2);
+    return [
+      { src: base, alt: `${pet.name} photo 1` },
+      { src: alt2, alt: `${pet.name} photo 2` },
+      { src: alt3, alt: `${pet.name} photo 3` },
+    ];
+  }
+
+  function setCarouselIndex(petId, idx) {
+    setCarouselIndexByPetId((prev) => ({ ...prev, [petId]: idx }));
+  }
+
+  function openLocation(pet) {
+    const lat = Number(pet.lat);
+    const lng = Number(pet.lng);
+    const hasCoords = Number.isFinite(lat) && Number.isFinite(lng);
+    const url = hasCoords
+      ? `https://www.google.com/maps?q=${encodeURIComponent(`${lat},${lng}`)}`
+      : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+          String(pet.location || "")
+        )}`;
+    window.open(url, "_blank", "noopener,noreferrer");
+  }
+
   async function handleAdopt(pet) {
+    if (adopted.has(pet.id)) return;
     try {
       const res = await fetch("/api/adoptions", {
         method: "POST",
@@ -716,6 +924,8 @@ function Adopt() {
         body: JSON.stringify({ petId: pet.id }),
       });
       if (!res.ok) throw new Error("adopt_failed");
+      const data = await res.json();
+      if (data?.state?.adoptions) setAdopted(new Set(data.state.adoptions));
       alert(`Adoption request submitted for ${pet.name}.`);
     } catch {
       alert(`Unable to submit adoption right now for ${pet.name}.`);
@@ -723,25 +933,36 @@ function Adopt() {
   }
 
   async function handleToggleLike(pet) {
-    setLiked((prev) => {
-      const next = new Set(prev);
-      if (next.has(pet.id)) next.delete(pet.id);
-      else next.add(pet.id);
-      return next;
-    });
-
     try {
-      await fetch("/api/likes", {
+      const res = await fetch("/api/likes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ petId: pet.id }),
       });
+      if (!res.ok) throw new Error("like_failed");
+      const data = await res.json();
+      if (data?.state?.likes) {
+        setLiked(new Set(data.state.likes));
+      } else {
+        setLiked((prev) => {
+          const next = new Set(prev);
+          if (next.has(pet.id)) next.delete(pet.id);
+          else next.add(pet.id);
+          return next;
+        });
+      }
     } catch {
-      // ignore
+      setLiked((prev) => {
+        const next = new Set(prev);
+        if (next.has(pet.id)) next.delete(pet.id);
+        else next.add(pet.id);
+        return next;
+      });
     }
   }
 
   async function handleAid(pet, kind) {
+    if (aidRequested.has(aidKey(pet.id, kind))) return;
     try {
       const res = await fetch("/api/aid", {
         method: "POST",
@@ -749,6 +970,18 @@ function Adopt() {
         body: JSON.stringify({ petId: pet.id, kind }),
       });
       if (!res.ok) throw new Error("aid_failed");
+      const data = await res.json();
+      if (data?.state?.aid && Array.isArray(data.state.aid)) {
+        setAidRequested(
+          new Set(
+            data.state.aid
+              .filter((r) => r && r.petId && r.kind)
+              .map((r) => aidKey(r.petId, r.kind))
+          )
+        );
+      } else {
+        setAidRequested((prev) => new Set(prev).add(aidKey(pet.id, kind)));
+      }
       alert(`${kind} request submitted for ${pet.name}.`);
     } catch {
       alert(`Unable to submit ${kind} request right now for ${pet.name}.`);
@@ -760,7 +993,7 @@ function Adopt() {
       <div className="adoptHeader">
         <h1 className="adoptTitle">Adopt a Pet</h1>
         <p className="adoptSubtitle">
-          Find your new friend. Light creamy theme with simple, clear actions.
+          Find your new friend. Browse, like, adopt, and support animals in need.
         </p>
 
         {error ? <div className="adoptNotice">{error}</div> : null}
@@ -779,116 +1012,215 @@ function Adopt() {
         </div>
       </div>
 
-      <div className="adoptGrid">
-        {loading ? (
-          <div className="adoptLoading">Loading pets...</div>
-        ) : (
-          filteredPets.map((pet) => {
-            const isLiked = liked.has(pet.id);
-            return (
-              <div key={pet.id} className="petCard">
-                <div className="petImageWrap">
-                  <img
-                    className="petImage"
-                    src={getImageSrcForPet(pet.id)}
-                    alt={pet.name}
-                    loading="lazy"
-                    onError={(e) => {
-                      e.currentTarget.src = "/src/assets/react.svg";
-                    }}
-                  />
+      {rescuePets.length ? (
+        <div className="rescueSection" aria-label="Rescue needed">
+          <div className="rescueHead">
+            <h2 className="rescueTitle">Rescue Needed</h2>
+            <span className="rescueHint">Swipe to view</span>
+          </div>
+          <div className="rescueRow" role="list">
+            {rescuePets.slice(0, 10).map((pet) => {
+              const isAdopted = adopted.has(pet.id);
+              const rescueKind = "Rescue";
+              const rescueRequested = aidRequested.has(aidKey(pet.id, rescueKind));
+              const imgs = imagesForPet(pet);
+              const idx = carouselIndexByPetId[pet.id] ?? 0;
+              return (
+                <div key={pet.id} className="rescueCard" role="listitem">
+                  <div className="rescueBadge">Rescue</div>
+                  <div className="rescueMedia">
+                    <PetCarousel
+                      pet={pet}
+                      images={imgs}
+                      activeIndex={idx}
+                      setActiveIndex={(n) => setCarouselIndex(pet.id, n)}
+                    />
+                  </div>
+                  <div className="rescueBody">
+                    <div className="rescueNameRow">
+                      <div className="rescueName">{pet.name}</div>
+                      <button
+                        type="button"
+                        className="locationPill"
+                        onClick={() => openLocation(pet)}
+                        aria-label={`Open location for ${pet.name}`}
+                      >
+                        <LocationIcon className="btnIcon" />
+                        {pet.location}
+                      </button>
+                    </div>
+                    <div className="rescueActions">
+                      <button
+                        type="button"
+                        className="btnPrimary"
+                        onClick={() => handleAdopt(pet)}
+                        disabled={isAdopted}
+                        aria-disabled={isAdopted}
+                      >
+                        <BasketIcon className="btnIcon" />
+                        {isAdopted ? "Adopted" : "Adopt"}
+                      </button>
+                      <button
+                        type="button"
+                        className="btnAid btnRescue"
+                        onClick={() => handleAid(pet, rescueKind)}
+                        disabled={rescueRequested}
+                        aria-disabled={rescueRequested}
+                      >
+                        <RescueIcon className="btnIcon" />
+                        {rescueRequested ? "Requested" : "Rescue"}
+                      </button>
+                    </div>
+                  </div>
                 </div>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
 
-                <div className="petBody">
-                  <div className="petTop">
-                    <h3 className="petName">{pet.name}</h3>
-                    <span className="petType">{pet.type}</span>
-                  </div>
-
-                  <div className="petMeta">
-                    <div className="petMetaRow">
-                      <span className="petMetaLabel">Breed</span>
-                      <span className="petMetaValue">{pet.breed}</span>
-                    </div>
-                    <div className="petMetaRow">
-                      <span className="petMetaLabel">Gender</span>
-                      <span className="petMetaValue">{pet.gender}</span>
-                    </div>
-                    <div className="petMetaRow">
-                      <span className="petMetaLabel">Age</span>
-                      <span className="petMetaValue">{pet.age}</span>
-                    </div>
-                    <div className="petMetaRow">
-                      <span className="petMetaLabel">Location</span>
-                      <span className="petMetaValue">{pet.location}</span>
-                    </div>
-                  </div>
-
-                  <div className="petActions">
-                    <button
-                      type="button"
-                      className="btnPrimary"
-                      onClick={() => handleAdopt(pet)}
-                    >
-                      <BasketIcon className="btnIcon" />
-                      Adopt
-                    </button>
-
-                    <button
-                      type="button"
-                      className={`btnSecondary ${isLiked ? "liked" : ""}`}
-                      onClick={() => handleToggleLike(pet)}
-                      aria-pressed={isLiked}
-                    >
-                      <HeartIcon className="btnIcon" filled={isLiked} />
-                      Like
-                    </button>
-                  </div>
-
-                  {(pet.needsMedical || pet.needsDonate || pet.needsRescue) && (
-                    <div className="petAid">
-                      {pet.needsMedical && (
-                        <button
-                          type="button"
-                          className="btnAid"
-                          onClick={() => handleAid(pet, "Medical AID")}
-                        >
-                          <AidIcon className="btnIcon" />
-                          Medical AID
-                        </button>
-                      )}
-
-                      {pet.needsDonate && (
-                        <button
-                          type="button"
-                          className="btnAid"
-                          onClick={() => handleAid(pet, "Donation")}
-                        >
-                          <DonateIcon className="btnIcon" />
-                          Donation
-                        </button>
-                      )}
-
-                      {pet.needsRescue && (
-                        <button
-                          type="button"
-                          className="btnAid"
-                          onClick={() => handleAid(pet, "Rescue")}
-                        >
-                          <RescueIcon className="btnIcon" />
-                          Rescue
-                        </button>
-                      )}
-                    </div>
-                  )}
-                </div>
+    <div className="adoptGrid">
+      {loading ? (
+        <div className="adoptLoading">Loading pets...</div>
+      ) : (
+        visiblePets.map((pet) => {
+          const isLiked = liked.has(pet.id);
+          const isAdopted = adopted.has(pet.id);
+          const medicalKind = "Medical AID";
+          const donateKind = "Donation";
+          const rescueKind = "Rescue";
+          const medicalRequested = aidRequested.has(aidKey(pet.id, medicalKind));
+          const donateRequested = aidRequested.has(aidKey(pet.id, donateKind));
+          const rescueRequested = aidRequested.has(aidKey(pet.id, rescueKind));
+          const imgs = imagesForPet(pet);
+          const idx = carouselIndexByPetId[pet.id] ?? 0;
+          return (
+            <div key={pet.id} className="petCard">
+              <div className="petImageWrap">
+                <PetCarousel
+                  pet={pet}
+                  images={imgs}
+                  activeIndex={idx}
+                  setActiveIndex={(n) => setCarouselIndex(pet.id, n)}
+                />
               </div>
-            );
-          })
-        )}
-      </div>
+
+              <div className="petBody">
+                <div className="petTop">
+                  <h3 className="petName">{pet.name}</h3>
+                  <span className="petType">{pet.type}</span>
+                </div>
+
+                <button
+                  type="button"
+                  className="locationPill"
+                  onClick={() => openLocation(pet)}
+                  aria-label={`Open location for ${pet.name}`}
+                >
+                  <LocationIcon className="btnIcon" />
+                  {pet.location}
+                </button>
+
+                <div className="petMeta">
+                  <div className="petMetaRow">
+                    <span className="petMetaLabel">Breed</span>
+                    <span className="petMetaValue">{pet.breed}</span>
+                  </div>
+                  <div className="petMetaRow">
+                    <span className="petMetaLabel">Gender</span>
+                    <span className="petMetaValue">{pet.gender}</span>
+                  </div>
+                  <div className="petMetaRow">
+                    <span className="petMetaLabel">Age</span>
+                    <span className="petMetaValue">{pet.age}</span>
+                  </div>
+                </div>
+
+                <div className="petActions">
+                  <button
+                    type="button"
+                    className="btnPrimary"
+                    onClick={() => handleAdopt(pet)}
+                    disabled={isAdopted}
+                    aria-disabled={isAdopted}
+                  >
+                    <BasketIcon className="btnIcon" />
+                    {isAdopted ? "Adopted" : "Adopt"}
+                  </button>
+
+                  <button
+                    type="button"
+                    className={`btnSecondary ${isLiked ? "liked" : ""}`}
+                    onClick={() => handleToggleLike(pet)}
+                    aria-pressed={isLiked}
+                  >
+                    <HeartIcon className="btnIcon" filled={isLiked} />
+                    Like
+                  </button>
+                </div>
+
+                {(pet.needsMedical || pet.needsDonate || pet.needsRescue) && (
+                  <div className="petAid">
+                    {pet.needsMedical && (
+                      <button
+                        type="button"
+                        className="btnAid btnMedical"
+                        onClick={() => handleAid(pet, medicalKind)}
+                        disabled={medicalRequested}
+                        aria-disabled={medicalRequested}
+                      >
+                        <AidIcon className="btnIcon" />
+                        {medicalRequested ? "Requested" : "Medical Help"}
+                      </button>
+                    )}
+
+                    {pet.needsDonate && (
+                      <button
+                        type="button"
+                        className="btnAid btnDonate"
+                        onClick={() => handleAid(pet, donateKind)}
+                        disabled={donateRequested}
+                        aria-disabled={donateRequested}
+                      >
+                        <DonateIcon className="btnIcon" />
+                        {donateRequested ? "Requested" : "Donate Now"}
+                      </button>
+                    )}
+
+                    {pet.needsRescue && (
+                      <button
+                        type="button"
+                        className="btnAid btnRescue"
+                        onClick={() => handleAid(pet, rescueKind)}
+                        disabled={rescueRequested}
+                        aria-disabled={rescueRequested}
+                      >
+                        <RescueIcon className="btnIcon" />
+                        {rescueRequested ? "Requested" : rescueKind}
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })
+      )}
     </div>
+
+    {!loading && filteredPets.length > visibleCount ? (
+      <div className="viewMoreWrap">
+        <button
+          type="button"
+          className="viewMoreBtn"
+          onClick={() => setVisibleCount((c) => c + 9)}
+        >
+          View more
+        </button>
+      </div>
+    ) : null}
+  </div>
   );
-}
+};
 
 export default Adopt;
