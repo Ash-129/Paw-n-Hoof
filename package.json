@@ -1,14 +1,5 @@
 {
-  "name": "paw-n-hoof",
-  "private": true,
-  "version": "1.0.0",
-  "scripts": {
-    "install:all": "npm.cmd --prefix Client/Client install && npm.cmd --prefix Server install",
-    "dev": "node dev.mjs",
-    "dev:server": "node Server/index.js",
-    "dev:client": "node Client/Client/node_modules/vite/bin/vite.js --root Client/Client"
-  },
-  "devDependencies": {
-    "concurrently": "^9.2.0"
+  "dependencies": {
+    "react-icons": "^5.5.0"
   }
 }

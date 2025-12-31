@@ -1,38 +1,8 @@
  const express = require("express");
- const fs = require("node:fs");
- const path = require("node:path");
  require("dotenv").config();
  
  const app = express();
  const PORT = process.env.PORT || 5000;
- const STORE_PATH = path.join(__dirname, "store.json");
-
- function toId(value) {
-   const n = Number(value);
-   return Number.isFinite(n) ? n : null;
- }
- 
- function readStore() {
-   try {
-     const raw = fs.readFileSync(STORE_PATH, "utf8");
-     const parsed = JSON.parse(raw);
-     return {
-       likes: (Array.isArray(parsed.likes) ? parsed.likes : [])
-         .map(toId)
-         .filter((v) => v !== null),
-       adoptions: (Array.isArray(parsed.adoptions) ? parsed.adoptions : [])
-         .map(toId)
-         .filter((v) => v !== null),
-       aid: Array.isArray(parsed.aid) ? parsed.aid : [],
-     };
-   } catch {
-     return { likes: [], adoptions: [], aid: [] };
-   }
- }
- 
- function writeStore(store) {
-   fs.writeFileSync(STORE_PATH, JSON.stringify(store, null, 2), "utf8");
- }
  
  app.use(express.json());
  
@@ -112,15 +82,6 @@
  app.get("/api/health", (req, res) => {
    res.json({ ok: true });
  });
-
- app.get("/api/state", (req, res) => {
-   const store = readStore();
-   res.json({
-     likes: store.likes,
-     adoptions: store.adoptions,
-     aid: store.aid,
-   });
- });
  
  app.get("/api/pets", (req, res) => {
    res.json(pets);
@@ -128,45 +89,22 @@
  
  app.post("/api/adoptions", (req, res) => {
    const { petId } = req.body || {};
-   const id = toId(petId);
-   if (!id) return res.status(400).json({ ok: false, message: "petId required" });
-   const store = readStore();
-   if (!store.adoptions.includes(id)) {
-     store.adoptions.push(id);
-     writeStore(store);
-   }
-   return res.json({ ok: true, petId: id, state: store });
+   if (!petId) return res.status(400).json({ ok: false, message: "petId required" });
+   return res.json({ ok: true, petId });
  });
  
  app.post("/api/likes", (req, res) => {
    const { petId } = req.body || {};
-   const id = toId(petId);
-   if (!id) return res.status(400).json({ ok: false, message: "petId required" });
-   const store = readStore();
-   if (store.likes.includes(id)) {
-     store.likes = store.likes.filter((v) => v !== id);
-   } else {
-     store.likes.push(id);
-   }
-   writeStore(store);
-   return res.json({ ok: true, petId: id, liked: store.likes.includes(id), state: store });
+   if (!petId) return res.status(400).json({ ok: false, message: "petId required" });
+   return res.json({ ok: true, petId });
  });
  
  app.post("/api/aid", (req, res) => {
    const { petId, kind } = req.body || {};
-   const id = toId(petId);
-   if (!id || !kind) {
+   if (!petId || !kind) {
      return res.status(400).json({ ok: false, message: "petId and kind required" });
    }
-   const store = readStore();
-   const already = store.aid.some(
-     (r) => toId(r?.petId) === id && String(r?.kind) === String(kind)
-   );
-   if (!already) {
-     store.aid.push({ petId: id, kind, at: new Date().toISOString() });
-     writeStore(store);
-   }
-   return res.json({ ok: true, petId: id, kind, already, state: store });
+   return res.json({ ok: true, petId, kind });
  });
  
  app.listen(PORT, () => {
