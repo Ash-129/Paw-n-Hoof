@@ -12,9 +12,10 @@ function Home() {
       <Herosec />
       <Subsec />
       <Adopt />
+      <Login />
       <ContactUs />
       <Footer />
-      <Login />
+      
     </>
   )
 }
