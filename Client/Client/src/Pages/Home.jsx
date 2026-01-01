@@ -5,7 +5,6 @@ import Footer from '../Components/Footer.jsx'
 import Adopt from '../Components/Adopt.jsx'
 import ContactUs from '../Components/ContactUs.jsx'
 
-
 function Home() {
   return (
     <>
