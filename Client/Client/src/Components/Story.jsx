@@ -7,7 +7,7 @@ function Story() {
     <section className='w-full h-[70vh] bg-white flex '>
         
             {/* left */}
-            <div className="left w-[50%] h-[100%] bg-amber-300">
+            <div className="left w-[50%] h-[100%] bg-amber-300 flex flex-col ">
                 <div>
                     <div className="top">Success Story</div>
                     <h1 className="text-2xl font-bold text-[#421f16]">Max's Journey to a Forever Home</h1>
