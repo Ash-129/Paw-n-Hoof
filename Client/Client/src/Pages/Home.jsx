@@ -15,7 +15,7 @@ function Home() {
       <Adopt />
       <Story/>
       <Login />
-      <ContactUs />
+      <ContactUs/>
       <Footer />
       
     </>
