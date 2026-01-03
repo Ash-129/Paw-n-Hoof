@@ -5,15 +5,18 @@ import Footer from '../Components/Footer.jsx'
 import Adopt from '../Components/Adopt.jsx'
 import ContactUs from '../Components/ContactUs.jsx'
 import Login from '../Components/Login.jsx' 
-
+import Story from '../Components/Story.jsx'
+import Newsletter from '../Components/Newsletter.jsx'
 function Home() {
   return (
     <>
       <Herosec />
       <Subsec />
       <Adopt />
+      <Story/>
+      <Newsletter/>
       <Login />
-      <ContactUs />
+      <ContactUs/>
       <Footer />
       
     </>
