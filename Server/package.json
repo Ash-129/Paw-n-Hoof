@@ -1,14 +1,14 @@
 {
-  "name": "server",
+  "name": "paw-nhoof-server",
   "version": "1.0.0",
-  "description": "",
+  "description": "Backend server for Paw'nHoof animal adoption platform",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
+  "keywords": ["animal", "adoption", "rescue", "nodejs", "express"],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
