@@ -20,10 +20,11 @@ const Navbar = () => {
 
         {/* Center - Menu */}
         <ul className="hidden md:flex items-center gap-8 text-gray-700 font-medium">
+          <li><Link to="/" className="hover:text-orange-600 transition">Home</Link></li>
           <li><Link to="/adopt" className="hover:text-orange-600 transition">Adopt</Link></li>
-          <li><Link to="/contact" className="hover:text-orange-600 transition">Donate</Link></li>
-          <li><Link to="/contact" className="hover:text-orange-600 transition">Volunteer</Link></li>
-          <li><Link to="/stories" className="hover:text-orange-600 transition">Stories</Link></li>
+          <li><Link to="/donation" className="hover:text-orange-600 transition">Donation</Link></li>
+          <li><Link to="/stories" className="hover:text-orange-600 transition">Story</Link></li>
+          <li><Link to="/contact" className="hover:text-orange-600 transition">ContactUs</Link></li>
         </ul>
 
         {/* Right - Button */}

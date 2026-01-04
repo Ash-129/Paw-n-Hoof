@@ -8,7 +8,6 @@ import Newsletter from '../Components/Newsletter.jsx'
 function Home() {
   return (
     <>
-      <Home/>
       <Herosec />
       <Subsec />
       <Adopt />
