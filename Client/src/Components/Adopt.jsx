@@ -657,9 +657,10 @@ const fallbackPets = [
   },
 ];
 
-function getImageSrcForPet(petId) {
-  const imageIndex = ((petId - 1) % 30) + 1;
-  return `/src/assets/image${imageIndex}.png`;
+function getImageSrcForPet(pet) {
+  // Use pet name in lowercase for image filename in Images folder
+  const sanitizedName = pet.name.toLowerCase().replace(/\s+/g, '');
+  return `/src/Images/${sanitizedName}.jpeg`;
 }
 
 function Adopt() {
@@ -682,7 +683,7 @@ function Adopt() {
         if (!cancelled) {
           setPets(Array.isArray(data) ? data : fallbackPets);
         }
-      } catch (e) {
+      } catch {
         if (!cancelled) {
           setPets(fallbackPets);
           setError("Backend not reachable, showing local data.");
@@ -790,7 +791,7 @@ function Adopt() {
                 <div className="petImageWrap">
                   <img
                     className="petImage"
-                    src={getImageSrcForPet(pet.id)}
+                    src={getImageSrcForPet(pet)}
                     alt={pet.name}
                     loading="lazy"
                     onError={(e) => {

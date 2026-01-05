@@ -3,7 +3,7 @@ import { MdOutlinePets } from "react-icons/md";
 import { MdHomeFilled } from "react-icons/md";
 import { FaHeart } from "react-icons/fa";
 
-function Subsec() {
+function Subsec() { 
   return (
     <>
             <section className="bg-[#ebe3d3] py-12">

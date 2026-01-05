@@ -17,7 +17,7 @@ function Footer() {
                 <div className='Container flex  justify-between grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 p-10  border-b-4 border-[#bfb5b2] pb-30'>
 
                     <div className="sectionFirst mt-10 ">
-                        <div className="head text-white font-extrabold text-3xl flex items-center gap-4 mb-3" ><MdOutlinePets className='text-[#ed7c2b]' />Paw'n-Hoof</div>
+                        <div className="head text-white font-extrabold text-3xl flex items-center gap-4 mb-3" ><MdOutlinePets className='text-[#ed7c2b]' />Paw'nHoof</div>
                         <div className='text-[#bfb5b2]'>Brining the Farmars Market to Your kitchen. fresh,organic groceries delivered to your doorsteps.
                         </div>
                         <div className='text-[#bfb5b2] text-2xl font-extrabold flex gap-4 mt-4 flex-row flex'>
