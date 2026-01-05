@@ -1,5 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import Paw from '../Images/Paw.png';
 
 const Navbar = () => {
   return (
@@ -9,11 +10,10 @@ const Navbar = () => {
         {/* Left - Logo */}
         <Link to="/" className="flex items-center gap-2">
           <img
-            src="/Paw'nHoof.png"   // replace with your logo path
-            alt="Paws & Hope"
-            className="h-8 w-8"
+            src={Paw}
+            alt="Paw'n-hoof"
+            className="h-20"
           />
-         
         </Link>
 
         {/* Center - Menu */}
