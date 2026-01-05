@@ -127,13 +127,9 @@ Contributions are what make the open-source community such an amazing place to l
 
 ---
 
-## 📄 License
-
-This project is licensed under the ISC License.
-
----
 
 ## 📞 Contact
 
 For any queries or support, please reach out to the project maintainers.
+
 
