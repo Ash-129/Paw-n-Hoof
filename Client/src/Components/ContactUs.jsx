@@ -56,18 +56,18 @@ function ContactUs() {
           <div className="space-y-4">
             <div>
               <p className="text-sm font-semibold text-gray-500">ADDRESS</p>
-              <p>123 Paws Avenue<br />Pet City, PC 90210</p>
+              <p>Opposite to Padole hospital, megh appartment. second floor<br />Nagpur, Maharashtra, PC 440001</p>
             </div>
 
             <div>
               <p className="text-sm font-semibold text-gray-500">PHONE</p>
-              <p>(555) 123-4567</p>
+              <p>+91 8975434272</p>
               <p className="text-sm text-gray-500">Mon–Fri 9am–6pm</p>
             </div>
 
             <div>
               <p className="text-sm font-semibold text-gray-500">EMAIL</p>
-              <p>hello@petdonations.com</p>
+              <p>info@pawnhoo.com</p>
             </div>
           </div>
 

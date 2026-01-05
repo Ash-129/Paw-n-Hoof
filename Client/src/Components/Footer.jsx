@@ -17,7 +17,7 @@ function Footer() {
                 <div className='Container flex  justify-between grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 p-10  border-b-4 border-[#bfb5b2] pb-30'>
 
                     <div className="sectionFirst mt-10 ">
-                        <div className="head text-white font-extrabold text-3xl flex items-center gap-4 mb-3" ><MdOutlinePets className='text-[#ed7c2b]' />PetHaven</div>
+                        <div className="head text-white font-extrabold text-3xl flex items-center gap-4 mb-3" ><MdOutlinePets className='text-[#ed7c2b]' />Paw'n-Hoof</div>
                         <div className='text-[#bfb5b2]'>Brining the Farmars Market to Your kitchen. fresh,organic groceries delivered to your doorsteps.
                         </div>
                         <div className='text-[#bfb5b2] text-2xl font-extrabold flex gap-4 mt-4 flex-row flex'>
@@ -56,9 +56,9 @@ function Footer() {
                     <div className="sectionFourth text-white flex flex-col  mt-10"> 
                         <div className="head  text-white font-bold text-1xl">Contact</div>
                         <div className="list text-[#bfb5b2] flex flex-col gap-2 mt-4 list-none">
-                            <li className='flex gap-5 items-center mb-3'><FaLocationDot className='text-[#ed7c2b]' />123 Market Street,Suite 480 Sen Francisec,CA 94103</li>
-                            <li className='flex gap-5 items-center mb-3'><FaPhoneAlt className='text-[#ed7c2b]'/>+1 (555) 123-4567</li>
-                            <li className='flex gap-5 items-center mb-3'><IoIosMail className='text-[#ed7c2b]' />contact@grocerx.com</li>
+                            <li className='flex gap-5 items-center mb-3'><FaLocationDot className='text-[#ed7c2b]' />Opposite to Padole hospital, megh appartment. second floor<br />Nagpur, Maharashtra, PC 440001</li>
+                            <li className='flex gap-5 items-center mb-3'><FaPhoneAlt className='text-[#ed7c2b]'/>+91 8975434272</li>
+                            <li className='flex gap-5 items-center mb-3'><IoIosMail className='text-[#ed7c2b]' />info@pawnhoo.com</li>
                             
                         </div>
                     </div>
@@ -67,7 +67,7 @@ function Footer() {
                 </div>
 
                 <div className="CopyWritw text-center text-[#bfb5b2] flex items-center justify-between pl-5 pr-5 mt-6">
-                    <div className="f1">© 2024 PetHaven. All rights reserved.</div>
+                    <div className="f1">© 2024 Paw'n-Hoof. All rights reserved.</div>
                     <div className="f2 text-[#bfb5b2] flex justify-center ">
                         <span className='mr-4'>Privacy Policy</span>
                         <span className='mr-4'>Terms of Service</span>

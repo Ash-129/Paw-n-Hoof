@@ -17,7 +17,7 @@ export default function Login() {
               WELCOME BACK
             </span>
             <h2 className="text-4xl font-bold text-white mb-3">
-              Login to PetRescue
+              Login to Paw'n-Hoof
             </h2>
             <p className="text-gray-200 max-w-sm">
               Continue your journey of helping rescued pets find a loving home.
@@ -28,7 +28,7 @@ export default function Login() {
         {/* RIGHT LOGIN FORM */}
         <div className="p-8 md:p-12 flex flex-col justify-center">
           <div className="flex items-center gap-2 text-2xl font-bold text-orange-600 mb-6">
-            🐾 PetRescue
+            🐾 Paw'n-Hoof
           </div>
 
           <h3 className="text-2xl font-bold mb-2">Sign in to your account</h3>
